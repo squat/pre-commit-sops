@@ -1,0 +1,17 @@
+- id: sops
+  name: detect unencrypted SOPS secrets
+  description: detects the presence of SOPS secrets that are unencrypted or are encrypted with the wrong key(s).
+  language: docker_image
+  entry: |
+    --entrypoint /bin/sh mozilla/sops:v3.7-alpine -c '
+    OUT=""
+    EXIT=0
+    for file in "$@"; do
+      if ! out="$(sops updatekeys "$file" 2>&1 1>/dev/null)"; then
+        OUT="$OUT\n$out"
+        EXIT=1
+      fi
+    done
+    echo -ne "$OUT" | sed "s|.*Syncing keys for file /src/||g"
+    exit "$EXIT"' sh
+  files: .*secret.*
